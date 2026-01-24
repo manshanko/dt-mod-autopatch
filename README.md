@@ -7,12 +7,10 @@ Based on Aussiemon's original nodejs script.
 
 Supports Windows and Linux.
 
-## About
+Implemented as a Darktide plugin `_dt_mod_autopatch.dll` is loaded everytime the game starts.
+It then patches `bundle_database.data` to load `9ba626afa44a3aa3.patch_999` before Darktide starts loading bundles.
 
-dt-mod-autopatch is a Darktide plugin (`_dt_mod_autopatch.dll`) that patches `bundle_database.data` to load `9ba626afa44a3aa3.patch_999` from DML.
-
-Since dt-mod-autopatch is loaded by Darktide the same binary works on Linux with Wine.
-In addition `toggle_dt_mod_autopatch.cmd` is a hybrid `cmd`/`sh` script works on Windows and Linux.
+`toggle_dt_mod_autopatch.cmd` is a valid `cmd` and `sh` script for Windows and Linux that toggles dt-mod-autopatch.
 
 ## Build
 
