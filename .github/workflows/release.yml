@@ -1,0 +1,51 @@
+name: release
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+    - uses: actions/checkout@v3
+
+    - name: Get release version from tag
+      shell: bash
+      if: env.APP_VERSION == ''
+      run: |
+        echo "APP_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        echo "version is: ${{ env.APP_VERSION }}"
+
+    - name: Create GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create ${{ env.APP_VERSION }}
+
+    - name: Install Zig
+      uses: mlugg/setup-zig@v2
+      with:
+        version: 0.15.0
+
+    - name: Build release binary
+      run: zig build --release=safe -Dtarget=x86_64-windows-gnu
+
+    - name: Create archive
+      shell: bash
+      run: |
+        staging="dtma-${{ env.APP_VERSION }}"
+        mkdir -p "$staging"
+
+        mkdir -p "$staging/binaries/plugins"
+        cp "zig-out/bin/_dt_mod_autopatch.dll" "$staging/binaries/plugins/"
+        cp "toggle_dt_mod_autopatch.cmd" "$staging/"
+        chmod +x "$staging/toggle_dt_mod_autopatch.cmd"
+        7z a "$staging.zip" "$staging/."
+        echo "ASSET=$staging.zip" >> $GITHUB_ENV
+
+    - name: Upload release archive
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release upload ${{ env.APP_VERSION }} ${{ env.ASSET }}
