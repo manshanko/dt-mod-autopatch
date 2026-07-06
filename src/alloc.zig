@@ -30,8 +30,13 @@ noinline fn map(n: usize, alignment: std.mem.Alignment) ?[*]u8 {
             @ptrCast(&base_addr),
             0,
             &size,
-            windows.MEM_COMMIT | windows.MEM_RESERVE,
-            windows.PAGE_READWRITE,
+            windows.MEM.ALLOCATE {
+                .COMMIT = true,
+                .RESERVE = true,
+            },
+            windows.PAGE {
+                .READWRITE = true,
+            },
         );
 
         return if (status == windows.NTSTATUS.SUCCESS and std.mem.isAligned(@intFromPtr(base_addr), alignment_bytes))
@@ -51,7 +56,9 @@ noinline fn unmap(memory: []align(std.heap.page_size_min) u8) void {
             windows.GetCurrentProcess(),
             @ptrCast(memory.ptr),
             &region_size,
-            windows.MEM_RELEASE,
+            windows.MEM.FREE {
+                .RELEASE = true,
+            },
         );
     } else {
         @compileError("only windows supported");

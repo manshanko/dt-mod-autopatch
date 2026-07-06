@@ -41,8 +41,7 @@ pub fn apply(
 
     // write patched database
     const patched_data = try std.mem.concat(allocator, u8, &[_][]const u8{data[0..offset], MOD_PATCH, data[offset + OLD_SIZE..]});
-    const db = try fs.create_file(db_path);
-    db.writeAll(patched_data) catch |err| {
+    fs.write_file(db_path, patched_data) catch |err| {
         try restore_backup();
         return err;
     };

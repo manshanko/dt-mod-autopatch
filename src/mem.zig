@@ -1,11 +1,23 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
+extern "ntdll" fn RtlCopyMemory(
+    noalias dest: ?[*]u8,
+    noalias src: ?[*]const u8,
+    len: usize,
+) callconv(.winapi) void;
+extern "ntdll" fn RtlFillMemory(
+    noalias dest: ?[*]u8,
+    len: usize,
+    fill: u32,
+) callconv(.winapi) void;
+
 // Reduces binary size (as of Zig 0.15).
 // Compare before/after with it commented out.
 comptime {
     if (builtin.mode != .Debug) {
         @export(&memcpy_, .{ .name = "memcpy", .linkage = .strong });
+        @export(&strlen_, .{ .name = "strlen", .linkage = .strong });
     }
 
     if (builtin.mode == .ReleaseSafe or builtin.mode == .ReleaseFast) {
@@ -28,31 +40,20 @@ pub noinline fn index_of_pos(haystack: []const u8, start_index: usize, needle: [
     return null;
 }
 
-// zig/lib/compiler_rt/memcpy.zig
-fn memcpy_(noalias dest: ?[*]u8, noalias src: ?[*]u8, len: usize) callconv(.c) ?[*]u8 {
-    @setRuntimeSafety(false);
+// LLVM may pattern match and inline memcpy/memset (becomes a recursive call)
+// imports are used as a workaround
 
-    for (0..len) |i| {
-        dest.?[i] = src.?[i];
-    }
-
+fn memcpy_(noalias dest: ?[*]u8, noalias src: ?[*]const u8, len: usize) callconv(.c) ?[*]u8 {
+    RtlCopyMemory(dest, src, len);
     return dest;
 }
 
-// zig/lib/compiler_rt/memset.zig
 fn memset_(dest: ?[*]u8, c: u8, len: usize) callconv(.c) ?[*]u8 {
-    @setRuntimeSafety(false);
-
-    if (len != 0) {
-        var d = dest.?;
-        var n = len;
-        while (true) {
-            d[0] = c;
-            n -= 1;
-            if (n == 0) break;
-            d += 1;
-        }
-    }
-
+    RtlFillMemory(dest, len, c);
     return dest;
+}
+
+// zig/lib/compiler_rt.zig
+fn strlen_(s: [*:0]const c_char) callconv(.c) usize {
+    return std.mem.len(s);
 }

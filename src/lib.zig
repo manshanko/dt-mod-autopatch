@@ -8,6 +8,7 @@ const mem = @import("mem.zig");
 comptime {
     _ = mem;
 }
+const fs = @import("fs.zig");
 const patch = @import("patch.zig");
 
 comptime {
@@ -25,8 +26,8 @@ const std_options = std.Options{
 
 pub const BUNDLE_DIR = "bundle\\";
 pub const BUNDLE_DATABASE = "bundle_database.data";
-const DISABLE_PATH = wtf16("mods\\DISABLE_AUTOPATCHER");
-var LOG_FILE_PATH: []const u16 = wtf16("patch-log.txt");
+const DISABLE_PATH = wtf16("..\\mods\\DISABLE_AUTOPATCHER");
+var LOG_FILE_PATH: [:0]const u16 = wtf16("patch-log.txt");
 
 export fn get_plugin_api(_: u32) callconv(.c) ?*anyopaque {
     const allocator = alloc.page_allocator;
@@ -34,13 +35,7 @@ export fn get_plugin_api(_: u32) callconv(.c) ?*anyopaque {
     try_patch(allocator) catch |err| {
         if (err == error.AlreadyPatched) return null;
 
-        log("failed to apply patch");
-        const text = std.mem.concat(allocator, u8, &[_][]const u8{"error: ", errors.lookup(err)}) catch {
-            log("failed with OutOfMemory for allocating error message");
-            return null;
-        };
-        defer allocator.free(text);
-        log(text);
+        log_(&[_][]const u8{ "error: ", errors.lookup(err) });
     };
 
     return null;
@@ -62,21 +57,25 @@ fn try_patch(allocator: std.mem.Allocator) !void {
     const root_dir = try std.mem.concat(allocator, u16, &[_][]const u16{wtf16("\\??\\"), root_dir_});
     defer allocator.free(root_dir);
 
-    LOG_FILE_PATH = try std.mem.concat(allocator, u16, &[_][]const u16{root_dir, LOG_FILE_PATH});
+    LOG_FILE_PATH = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{root_dir, LOG_FILE_PATH}, 0);
 
-    const disable_path = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{root_dir, DISABLE_PATH}, 0);
-    if (std.os.windows.GetFileAttributesW(disable_path)) |_|
-        return
-    else |err|
-        if (err != error.FileNotFound) return;
+    if (try fs.file_exists(DISABLE_PATH)) {
+        return;
+    }
 
     patch.apply(allocator, root_dir) catch |err| if (err != error.AlreadyPatched) return err;
 }
 
 pub fn log(text: []const u8) void {
-    const file = std.fs.cwd().createFileW(LOG_FILE_PATH, .{ .truncate = false }) catch return;
-    defer file.close();
-    file.seekFromEnd(0) catch {};
-    file.writeAll(text) catch return;
-    file.writeAll("\n") catch return;
+    log_(&[_][]const u8{ text });
+}
+
+noinline fn log_(text: []const []const u8) void {
+    const file = fs.create_file(LOG_FILE_PATH) catch return;
+    defer fs.file_close(file);
+    var length = fs.file_length(file) catch return;
+    for (text) |t| {
+        length += fs.file_write(file, t, length) catch return;
+    }
+    _ = fs.file_write(file, "\n", length) catch return;
 }

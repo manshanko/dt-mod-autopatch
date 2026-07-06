@@ -64,6 +64,13 @@ pub const PatcherError = error {
     InvalidArgument,
     NotOpenForWriting,
     MessageTooBig,
+
+    FileLocksUnsupported,
+    Streaming,
+    UnknownError,
+    InvalidParameter,
+    BadPathSyntax,
+    EndOfStream,
 };
 
 fn patcher_error_asc(_: void, lhs: std.builtin.Type.Error, rhs: std.builtin.Type.Error) bool {
