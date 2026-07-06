@@ -14,4 +14,4 @@ It then patches `bundle_database.data` to load `9ba626afa44a3aa3.patch_999` befo
 
 ## Build
 
-Download [Zig 0.15](https://ziglang.org/download/#release-0.15.2) and build `_dt_mod_autopatch.dll` with `zig build --release=safe -Dtarget=x86_64-windows-gnu`
+Download [Zig 0.16](https://ziglang.org/download/#release-0.16.0) and build `_dt_mod_autopatch.dll` with `zig build --release=safe -Dtarget=x86_64-windows-gnu`
