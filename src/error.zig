@@ -124,7 +124,7 @@ const lookup_buffer: [buffer_size]u8 = lookup: {
 
 pub noinline fn lookup(err: PatcherError) [:0]const u8 {
     var index = @intFromError(err);
-    if (index > last_error) return "unexpected error";
+    if (index > last_error) return "<invalid-error>";
     var offset: usize = 0;
     while (index > 1) {
         if (lookup_buffer[offset] == 0) index -= 1;
@@ -137,7 +137,7 @@ pub noinline fn lookup(err: PatcherError) [:0]const u8 {
         len += 1;
     }
     return if (len == 0)
-        "unexpected error"
+        "<invalid-error>"
     else
         lookup_buffer[offset..offset + len :0];
 }
