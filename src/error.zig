@@ -71,6 +71,12 @@ pub const PatcherError = error {
     InvalidParameter,
     BadPathSyntax,
     EndOfStream,
+
+    FailedDisableCheck,
+    MissingLoaded,
+    MultipleHooksFound,
+    FailedVirtualProtect,
+    FailedPatch,
 };
 
 fn patcher_error_asc(_: void, lhs: std.builtin.Type.Error, rhs: std.builtin.Type.Error) bool {

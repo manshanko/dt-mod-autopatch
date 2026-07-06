@@ -10,6 +10,7 @@ comptime {
 }
 const fs = @import("fs.zig");
 const patch = @import("patch.zig");
+const hook = @import("hook.zig");
 
 comptime {
     if (builtin.os.tag != .windows) {
@@ -60,10 +61,13 @@ fn try_patch(allocator: std.mem.Allocator) !void {
     LOG_FILE_PATH = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{root_dir, LOG_FILE_PATH}, 0);
 
     if (try fs.file_exists(DISABLE_PATH)) {
-        return;
+         return;
     }
 
-    patch.apply(allocator, root_dir) catch |err| if (err != error.AlreadyPatched) return err;
+    try patch.remove(allocator, root_dir);
+    try hook.update_lua_init(allocator);
+    const darktide = hook.PeBinary.init(null) orelse return error.UnknownError;
+    try hook.patch_loader(&darktide);
 }
 
 pub fn log(text: []const u8) void {

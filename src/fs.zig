@@ -118,6 +118,10 @@ pub fn open_file(path: [:0]const u16) CreateError!std.Io.File {
     return create_file_(path, .OPEN, false);
 }
 
+pub fn create_dir(path: [:0]const u16) CreateError!std.Io.File {
+    return create_file_(path, .OPEN_IF, true);
+}
+
 pub fn file_exists(path: [:0]const u16) CreateError!bool {
     if (GetFileAttributesW(path.ptr) != 0xffffffff) {
         return true;

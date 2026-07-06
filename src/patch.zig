@@ -15,6 +15,8 @@ const MOD_PATCH_STARTING_POINT = std.mem.asBytes(&@byteSwap(MOD_PATCH_STARTING_P
 const DB_PATH_ = root.BUNDLE_DIR ++ root.BUNDLE_DATABASE;
 const DB_PATH = wtf16(DB_PATH_);
 const DB_BAK_PATH = wtf16(DB_PATH_ ++ ".bak");
+const DB_PATH_REL = wtf16("..\\" ++ DB_PATH_);
+const DB_BAK_PATH_REL = wtf16("..\\" ++ DB_PATH_ ++ ".bak");
 
 pub fn apply(
     allocator: std.mem.Allocator,
@@ -47,8 +49,35 @@ pub fn apply(
     };
 }
 
+pub fn remove(
+    allocator: std.mem.Allocator,
+    dt_dir: []const u16,
+) !void {
+    const db_path = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{dt_dir, DB_PATH}, 0);
+    defer allocator.free(db_path);
+
+    if (!try fs.file_exists(DB_BAK_PATH_REL)) {
+        return;
+    }
+
+    const data = fs.read_file(allocator, db_path) catch |err| return switch (err) {
+        error.FileNotFound => error.NotFoundDatabase,
+        else => err,
+    };
+    defer allocator.free(data);
+
+    _ = scan_database(data) catch |err| {
+        if (err == error.AlreadyPatched) {
+            try restore_backup();
+            return;
+        } else {
+            return err;
+        }
+    };
+}
+
 fn restore_backup() !void {
-    fs.rename(DB_BAK_PATH, DB_PATH) catch |err| return switch (err) {
+    fs.rename(DB_BAK_PATH_REL, DB_PATH_REL) catch |err| return switch (err) {
         error.FileNotFound => error.NotFoundBackup,
         else => err,
     };
