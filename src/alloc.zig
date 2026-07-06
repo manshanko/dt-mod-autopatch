@@ -16,7 +16,7 @@ const vtable: std.mem.Allocator.VTable = .{
     .free = free,
 };
 
-fn map(n: usize, alignment: std.mem.Alignment) ?[*]u8 {
+noinline fn map(n: usize, alignment: std.mem.Alignment) ?[*]u8 {
     const page_size = std.heap.pageSize();
     if (n >= std.math.maxInt(usize) - page_size) return null;
     const alignment_bytes = alignment.toByteUnits();
@@ -44,7 +44,7 @@ fn map(n: usize, alignment: std.mem.Alignment) ?[*]u8 {
     }
 }
 
-fn unmap(memory: []align(std.heap.page_size_min) u8) void {
+noinline fn unmap(memory: []align(std.heap.page_size_min) u8) void {
     if (builtin.os.tag == .windows) {
         var region_size: windows.SIZE_T = 0;
         _ = windows.ntdll.NtFreeVirtualMemory(
@@ -58,14 +58,14 @@ fn unmap(memory: []align(std.heap.page_size_min) u8) void {
     }
 }
 
-fn alloc(context: *anyopaque, n: usize, alignment: std.mem.Alignment, ra: usize) ?[*]u8 {
+noinline fn alloc(context: *anyopaque, n: usize, alignment: std.mem.Alignment, ra: usize) ?[*]u8 {
     _ = context;
     _ = ra;
     std.debug.assert(n > 0);
     return map(n, alignment);
 }
 
-fn free(context: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ra: usize) void {
+noinline fn free(context: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ra: usize) void {
     _ = context;
     _ = alignment;
     _ = ra;
