@@ -15,7 +15,6 @@ const MOD_PATCH_STARTING_POINT = std.mem.asBytes(&@byteSwap(MOD_PATCH_STARTING_P
 const DB_PATH_ = root.BUNDLE_DIR ++ root.BUNDLE_DATABASE;
 const DB_PATH = wtf16(DB_PATH_);
 const DB_BAK_PATH = wtf16(DB_PATH_ ++ ".bak");
-const DB_HASH_PATH = wtf16(DB_PATH_ ++ ".hash");
 
 pub fn apply(
     allocator: std.mem.Allocator,
@@ -25,8 +24,6 @@ pub fn apply(
     defer allocator.free(db_path);
     const db_bak_path = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{dt_dir, DB_BAK_PATH}, 0);
     defer allocator.free(db_bak_path);
-    const db_hash_path = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{dt_dir, DB_HASH_PATH}, 0);
-    defer allocator.free(db_hash_path);
 
     const data = fs.read_file(allocator, db_path) catch |err| return switch (err) {
         error.FileNotFound => error.NotFoundDatabase,

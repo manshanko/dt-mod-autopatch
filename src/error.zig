@@ -16,8 +16,6 @@ pub const PatcherError = error {
     NotFoundDarktide,
     NotFoundDatabase,
     UnsupportedDatabase,
-    UnexpectedHashError,
-    HashDataTooBig,
     InvalidExecutableName,
 
     AccessDenied,
