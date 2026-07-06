@@ -28,7 +28,7 @@ pub const BUNDLE_DATABASE = "bundle_database.data";
 const DISABLE_PATH = wtf16("mods\\DISABLE_AUTOPATCHER");
 var LOG_FILE_PATH: []const u16 = wtf16("patch-log.txt");
 
-export fn get_plugin_api(_: u32) ?*anyopaque {
+export fn get_plugin_api(_: u32) callconv(.c) ?*anyopaque {
     const allocator = alloc.page_allocator;
 
     try_patch(allocator) catch |err| {
