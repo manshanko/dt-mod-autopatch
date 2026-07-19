@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const wtf16 = std.unicode.wtf8ToWtf16LeStringLiteral;
 
+const config = @import("config");
 const errors = @import("error.zig");
 const alloc = @import("alloc.zig");
 const mem = @import("mem.zig");
@@ -61,13 +62,17 @@ fn try_patch(allocator: std.mem.Allocator) !void {
     LOG_FILE_PATH = try std.mem.concatWithSentinel(allocator, u16, &[_][]const u16{root_dir, LOG_FILE_PATH}, 0);
 
     if (try fs.file_exists(DISABLE_PATH)) {
-         return;
+        return;
     }
 
-    try patch.remove(allocator, root_dir);
-    try hook.update_lua_init(allocator);
-    const darktide = hook.PeBinary.init(null) orelse return error.UnknownError;
-    try hook.patch_loader(&darktide);
+    if (config.loader_patch) {
+        try patch.remove(allocator, root_dir);
+        try hook.update_lua_init(allocator);
+        const darktide = hook.PeBinary.init(null) orelse return error.UnknownError;
+        try hook.patch_loader(&darktide);
+    } else {
+        patch.apply(allocator, root_dir) catch |err| if (err != error.AlreadyPatched) return err;
+    }
 }
 
 pub fn log(text: []const u8) void {

@@ -11,7 +11,11 @@ pub fn build(b: *std.Build) void {
         target.result.os,
     );
 
-    const strip = b.option(bool, "strip", "strip debug information");
+    const config = b.addOptions();
+    const loader_patch = b.option(bool, "loader-patch", "Use loader patch") orelse false;
+    config.addOption(bool, "loader_patch", loader_patch);
+
+    const strip = b.option(bool, "strip", "Strip debug information");
     const unwind_tables: ?std.builtin.UnwindTables = if (optimize != .Debug) .none else null;
     const lib = b.addLibrary(.{
         .linkage = .dynamic,
@@ -28,6 +32,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+    lib.root_module.addOptions("config", config);
     lib.bundle_ubsan_rt = if (strip) |strip_| !strip_ else null;
     lib.is_linking_libc = false;
 
