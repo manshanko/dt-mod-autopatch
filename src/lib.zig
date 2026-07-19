@@ -14,7 +14,7 @@ const hook = @import("hook.zig");
 
 comptime {
     if (builtin.os.tag != .windows) {
-        @compileError("dma is loaded by Darktide.exe and only supports windows, try building with --target x86_64-windows-gnu");
+        @compileError("dma is loaded by Darktide.exe and only supports windows, build with -Dtarget=x86_64-windows-gnu");
     }
 }
 
